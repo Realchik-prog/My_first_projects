@@ -1,18 +1,19 @@
-from tkinter import *
+from tkinter import Tk, Label, Button, W, Entry, LEFT
 from random import randint, choice, random
 from time import time
 from tkinter.messagebox import askyesno, askyesnocancel, askokcancel
 import json
 import sys
 from pathlib import Path
+from typing import Optional
 
 def resource_path(relative_path):
     if getattr(sys, 'frozen', False):
         # Если запуск через exe файл
-        base_path = Path(sys._MEIPASS)
+        base_path = Path(getattr(sys, '_MEIPASS', '.'))
     else:
         # Если прямой запуск через программу
-        base_path = Path.cwd()
+        base_path = Path(__file__).parent
     return base_path / relative_path
 
 def get_save_path():
@@ -35,7 +36,7 @@ root = Tk()
 root.title('Верно или нет?')
 root.geometry('720x720')
 root.resizable(width=False, height=False)
-root.iconbitmap(str(resource_path('icon.ico')))
+root.iconbitmap(resource_path('icon.ico'))
 
 
 # Темы
@@ -155,15 +156,15 @@ except (FileNotFoundError, KeyError): # Если сохранения нет
     global_starts = 0 # Запусков
     global_correct = 0 # Всего правильно решённых примеров
     global_mistakes = 0 # Всего ошибок
-    solution_speed = { # Скорость решения примеров по сложностям (правильно решённые/время)
+    solution_speed: dict[str, Optional[int]] = { # Скорость решения примеров по сложностям (правильно решённые/время)
         'Легко': None,
         'Средне': None,
         'Трудно': None
     }
-    mistakes_frequency = { # Частота ошибок по сложностям (ошибки/(ошибки+правильно решённые))
-        'Легко': None,
-        'Средне': None,
-        'Трудно': None
+    mistakes_frequency: dict[str, int] = { # Частота ошибок по сложностям (ошибки/(ошибки+правильно решённые))
+        'Легко': 0,
+        'Средне': 0,
+        'Трудно': 0
     }
     victories_gm1 = timeouts_gm2 = 0 # Положительные окончания игр в 1 и 2 режимах
     surrenders_gm1 = surrenders_gm2 = 0 # Сколько раз игрок сдался в 1 и 2 режимах
@@ -198,7 +199,7 @@ except (FileNotFoundError, KeyError): # Если сохранения нет
         'Средне': 0,
         'Трудно': 0
     }
-    difficult_times = {
+    difficult_times: dict[str, float] = {
         'Легко': 0,
         'Средне': 0,
         'Трудно': 0
@@ -269,13 +270,15 @@ def game():
                                font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
             path_label = Label(text=f'Пройдено примеров: {start_count - count}/{start_count}',
                                font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+            time_label.place(relx=0.5, rely=0.59, anchor='center')
+            path_label.place(relx=0.5, rely=0.66, anchor='center')
         elif gamemode==2:
             time_label = Label(text=f'Время прохождения: {round(time2 - time1, 2)}/{start_time} сек',
                                font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
             path_label = Label(text=f'Пройдено примеров: {start_count - count}',
                                font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-        time_label.place(relx=0.5, rely=0.59, anchor='center')
-        path_label.place(relx=0.5, rely=0.66, anchor='center')
+            time_label.place(relx=0.5, rely=0.59, anchor='center')
+            path_label.place(relx=0.5, rely=0.66, anchor='center')
 
         def go_back():
             for widget in root.winfo_children():
@@ -327,75 +330,6 @@ def game():
             count_label.configure(text=f'Осталось: {count}', bg=global_bg)
         elif gamemode==2:
             count_label.configure(text=f'Осталось: {round(time_left, 2)} сек', bg=global_bg)
-            def time_out():
-                # Меню победы режима 2
-                global min_score, max_score, timeouts_gm2, open_statistics, completed_q2, quests_dict, completed_q3
-                open_statistics = True
-                timeouts_gm2 += 1
-                time2 = time()
-                for widget in root.winfo_children():
-                    widget.destroy()
-                win_label = Label(text='Время вышло!', fg='green', font=('Comic Sans MS', 20, 'bold'), bg=global_bg)
-                win_label.place(relx=0.5, rely=0.25, anchor='center')
-                difficult_label = Label(text=f'Сложность: {difficult}', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-                difficult_label.place(relx=0.5, rely=0.33, anchor='center')
-                gamemode_label = Label(root, text='Режим: 2', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-                gamemode_label.place(relx=0.5, rely=0.4, anchor='center')
-                if not loss_on_mistake:
-                    mistakes_label = Label(text=f'Ошибок: {mistakes}', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-                else:
-                    mistakes_label = Label(text=f'(Проигрыш при ошибке)', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-                mistakes_label.place(relx=0.5, rely=0.47, anchor='center')
-                time_label = Label(text=f'Время: {start_time} сек',
-                                       font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-                time_label.place(relx=0.5, rely=0.54, anchor='center')
-                path_label = Label(text=f'Пройдено примеров: {start_count - count}',
-                                       font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-                path_label.place(relx=0.5, rely=0.61, anchor='center')
-                difficult_coefficient = 2 if difficult == 'Трудно' else 0.5 if difficult == 'Легко' else 1
-                score = round(((start_count-count) ** 2 - mistakes ** 2) / (time2-time1) * difficult_coefficient * 1000)
-                score_label = Label(root, text=f'Счёт: {score}', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
-                score_label.place(relx=0.5, rely=0.68, anchor='center')
-                if min_score == None or min_score > score:
-                    min_score = score
-                if max_score == None or max_score < score:
-                    max_score = score
-
-                # Обработка квестов
-                if have_quests:
-                    # Квест 2
-                    if score>0 and start_time==quests_dict['2']['время'] and start_count - count >= quests_dict['2']['примеры'] and difficult == quests_dict['2']['сложность']:
-                        completed_q2 = True
-                        quests_dict['выполнено']['2'] += 1
-                    # Квест 3
-                    if quests_dict['3']['тип']==1:
-                        if score>=quests_dict['3']['счёт']:
-                            completed_q3 = True
-                            quests_dict['выполнено']['3'] += 1
-                            quests_dict['3']['тип'] = None
-                    elif quests_dict['3']['тип']==2:
-                        if start_count - count>=quests_dict['3']['примеры']:
-                            quests_dict['3']['прогресс'][difficult] = 1
-                            if sum(quests_dict['3']['прогресс'].values())==len(quests_dict['3']['прогресс']):
-                                completed_q3 = True
-                                quests_dict['выполнено']['3'] += 1
-                                quests_dict['3']['тип'] = None
-                    elif quests_dict['3']['тип']==4:
-                        if score>=quests_dict['3']['счёт'] and mistakes==0:
-                            completed_q3 = True
-                            quests_dict['выполнено']['3'] += 1
-                            quests_dict['3']['тип'] = None
-
-
-                def go_back():
-                    for widget in root.winfo_children():
-                        widget.destroy()
-                    menu()
-
-                go_menu_button = Button(root, text='В меню', bg=button_bg, font=('Comic Sans MS', 20, 'bold'),
-                                        command=go_back, activebackground=activate_button_bg)
-                go_menu_button.place(relx=0.5, rely=0.79, anchor='center')
-
         a = b = d = None
         a2 = b2= d2 = None
         a3 = b3 = result3 = None
@@ -448,17 +382,19 @@ def game():
         else:
             time_out()
             return 0
+        sign = None
+        c = None
         if difficult_label['text'] == 'Сложность примера: Легко':
             sign = choice(('+', '-'))
         elif difficult_label['text'] == 'Сложность примера: Средне':
             sign = choice(('+', '-', '*'))
         elif difficult_label['text'] == 'Сложность примера: Трудно':
             sign = choice(('+', '-', '*', '/'))
-        if sign == '+':
+        if sign == '+' and a is not None and b is not None:
             c = a + b
-        elif sign == '-':
+        elif sign == '-' and a is not None and b is not None:
             c = a - b
-        elif sign == '*':
+        elif sign == '*' and a2 is not None and b2 is not None:
             c = a2 * b2
         elif sign == '/':
             c = result3
@@ -471,7 +407,7 @@ def game():
                 example.configure(text=f'{a3} {sign} {b3} = {c}')
             ButtonYES.configure(command=correct)
             ButtonNO.configure(command=uncorrect)
-        else:
+        elif c is not None and d is not None:
             if sign=='+' or sign=='-':
                 if random() < 0.5:
                     example.configure(text=f'{a} {sign} {b} = {c + randint(1, d)}')
@@ -490,6 +426,79 @@ def game():
             ButtonYES.configure(command=uncorrect)
             ButtonNO.configure(command=correct)
         time_for_example_start = time()
+    def time_out():
+                # Меню победы режима 2
+                global min_score, max_score, timeouts_gm2, open_statistics, completed_q2, quests_dict, completed_q3
+                open_statistics = True
+                timeouts_gm2 += 1
+                time2 = time()
+                for widget in root.winfo_children():
+                    widget.destroy()
+                win_label = Label(text='Время вышло!', fg='green', font=('Comic Sans MS', 20, 'bold'), bg=global_bg)
+                win_label.place(relx=0.5, rely=0.25, anchor='center')
+                difficult_label = Label(text=f'Сложность: {difficult}', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+                difficult_label.place(relx=0.5, rely=0.33, anchor='center')
+                gamemode_label = Label(root, text='Режим: 2', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+                gamemode_label.place(relx=0.5, rely=0.4, anchor='center')
+                if not loss_on_mistake:
+                    mistakes_label = Label(text=f'Ошибок: {mistakes}', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+                else:
+                    mistakes_label = Label(text=f'(Проигрыш при ошибке)', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+                mistakes_label.place(relx=0.5, rely=0.47, anchor='center')
+                time_label = Label(text=f'Время: {start_time} сек',
+                                       font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+                time_label.place(relx=0.5, rely=0.54, anchor='center')
+                path_label = Label(text=f'Пройдено примеров: {start_count - count}',
+                                       font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+                path_label.place(relx=0.5, rely=0.61, anchor='center')
+                difficult_coefficient = 2 if difficult == 'Трудно' else 0.5 if difficult == 'Легко' else 1
+                score = round(((start_count-count) ** 2 - mistakes ** 2) / (time2-time1) * difficult_coefficient * 1000)
+                score_label = Label(root, text=f'Счёт: {score}', font=('Comic Sans MS', 20, 'bold'), bg=global_bg, fg=global_fg)
+                score_label.place(relx=0.5, rely=0.68, anchor='center')
+                if min_score == None or min_score > score:
+                    min_score = score
+                if max_score == None or max_score < score:
+                    max_score = score
+
+                # Обработка квестов
+                if have_quests:
+                    # Квест 2
+                    if score>0 and start_time==quests_dict['2']['время'] and start_count - count >= quests_dict['2']['примеры'] and difficult == quests_dict['2']['сложность']:
+                        if not completed_q2:
+                            quests_dict['выполнено']['2'] += 1
+                        completed_q2 = True
+                    # Квест 3
+                    if quests_dict['3']['тип']==1:
+                        if score>=quests_dict['3']['счёт']:
+                            if not completed_q3:
+                                quests_dict['выполнено']['3'] += 1
+                            completed_q3 = True
+                            quests_dict['3']['тип'] = None
+                    elif quests_dict['3']['тип']==2:
+                        if start_count - count>=quests_dict['3']['примеры']:
+                            quests_dict['3']['прогресс'][difficult] = 1
+                            if sum(quests_dict['3']['прогресс'].values())==len(quests_dict['3']['прогресс']):
+                                if not completed_q3:
+                                    quests_dict['выполнено']['3'] += 1
+                                completed_q3 = True
+                                quests_dict['3']['тип'] = None
+                    elif quests_dict['3']['тип']==4:
+                        if score>=quests_dict['3']['счёт'] and mistakes==0:
+                            if not completed_q3:
+                                quests_dict['выполнено']['3'] += 1
+                            completed_q3 = True
+                            quests_dict['3']['тип'] = None
+
+
+                def go_back():
+                    for widget in root.winfo_children():
+                        widget.destroy()
+                    menu()
+
+                go_menu_button = Button(root, text='В меню', bg=button_bg, font=('Comic Sans MS', 20, 'bold'),
+                                        command=go_back, activebackground=activate_button_bg)
+                go_menu_button.place(relx=0.5, rely=0.79, anchor='center')
+
     def correct():
         # При правильном ответе
         global record, max_score, min_score, global_correct, victories_gm1, time_for_example_start, open_statistics, \
@@ -502,8 +511,9 @@ def game():
         if have_quests and quests_dict['3']['тип']==3:
             quests_dict['3']['прогресс'] += 1
             if quests_dict['3']['прогресс']==quests_dict['3']['примеры']:
+                if not completed_q3:
+                    quests_dict['выполнено']['3'] += 1
                 completed_q3 = True
-                quests_dict['выполнено']['3'] += 1
                 quests_dict['3']['тип'] = None
         if count == 0 and gamemode==1:
             # Меню победы режима 1
@@ -541,25 +551,30 @@ def game():
             if have_quests:
                 # Квест 1
                 if score>0 and start_count == quests_dict['1']['примеры'] and time2 - time1 <= quests_dict['1']['время'] and difficult == quests_dict['1']['сложность']:
+                    if not completed_q1:
+                        quests_dict['выполнено']['1'] += 1
                     completed_q1 = True
-                    quests_dict['выполнено']['1'] += 1
+                    
                 # Квест 3
                 if quests_dict['3']['тип'] == 1:
                     if score >= quests_dict['3']['счёт']:
+                        if not completed_q3:
+                            quests_dict['выполнено']['3'] += 1
                         completed_q3 = True
-                        quests_dict['выполнено']['3'] += 1
                         quests_dict['3']['тип'] = None
                 elif quests_dict['3']['тип'] == 2:
                     if start_count >= quests_dict['3']['примеры']:
                         quests_dict['3']['прогресс'][difficult] = 1
                         if sum(quests_dict['3']['прогресс'].values()) == len(quests_dict['3']['прогресс']):
+                            if not completed_q3:
+                                quests_dict['выполнено']['3'] += 1
                             completed_q3 = True
-                            quests_dict['выполнено']['3'] += 1
                             quests_dict['3']['тип'] = None
                 elif quests_dict['3']['тип'] == 4:
                     if score >= quests_dict['3']['счёт'] and mistakes == 0:
+                        if not completed_q3:
+                            quests_dict['выполнено']['3'] += 1
                         completed_q3 = True
-                        quests_dict['выполнено']['3'] += 1
                         quests_dict['3']['тип'] = None
             def go_back():
                 for widget in root.winfo_children():
@@ -927,8 +942,9 @@ def statistics():
             i += 0.07
             if mistakes_counts[difficult] != 0:
                 mistakes_frequency[difficult] = round((mistakes_counts[difficult]+correct_counts[difficult]) / mistakes_counts[difficult])
-                mistakes_frequency_label = Label(root, text=f'{difficult}: раз в {mistakes_frequency[difficult]} {'примера' if mistakes_frequency[difficult]%10<5 and not 10<mistakes_frequency[difficult]%100<20 else 'примеров'}',
-                                             font=('Comic Sans MS', 18, 'bold'), bg=global_bg, fg=global_fg)
+                value = mistakes_frequency[difficult]
+                mistakes_frequency_label = Label(root, text=f'{difficult}: раз в {value} {'примера' if value%10<5 and not 10<value%100<20 and value%10!=0 else 'примеров'}',
+                                            font=('Comic Sans MS', 18, 'bold'), bg=global_bg, fg=global_fg)
             else:
                 mistakes_frequency_label = Label(root, text=f'{difficult}: Ошибок нет', font=('Comic Sans MS', 18, 'bold'), bg=global_bg, fg=global_fg)
             mistakes_frequency_label.place(relx=0.75, rely=0.62 + i, anchor='center')
@@ -1214,6 +1230,7 @@ def quests():
     # Квест 3
     quest3_label = Label(root, text=quests_dict['3']['текст'], font=('Comic Sans MS', 20, 'bold'), justify="left", wraplength=400, bg=global_bg, fg=global_fg)
     quest3_label.place(relx=0.05, rely=0.66, anchor='nw')
+    progress_q3_label: Optional[Label] = None
     if not completed_q3:
         completed_q3_label = Label(root, text='Не выполнено', fg='red', font=('Comic Sans MS', 20, 'bold'), bg=global_bg)
         if quests_dict['3']['тип']==2:
@@ -1223,7 +1240,7 @@ def quests():
     else:
         completed_q3_label = Label(root, text='Выполнено', fg='green', font=('Comic Sans MS', 20, 'bold'), bg=global_bg)
     completed_q3_label.place(relx=0.78, rely=0.74 if quests_dict['3']['тип']==2 else 0.68, anchor='n')
-    if quests_dict['3']['тип']==2 or quests_dict['3']['тип']==3 and not completed_q3:
+    if progress_q3_label is not None and not completed_q3:
         progress_q3_label.place(relx=0.78, rely=0.8 if quests_dict['3']['тип']==2 else 0.74, anchor='n')
 
     # Обновление квестов
