@@ -3,10 +3,11 @@ from tkinter import ttk
 import json
 from tkinter import filedialog
 from tkinter.messagebox import showerror
+from pathlib import Path
 
 
 # Файл для хранения заметок
-FILE = "notes.json"
+FILE = Path(__file__).parent / "notes.json"
 
 def show_listbox(select):
     global active_listbox

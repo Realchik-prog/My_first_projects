@@ -2,7 +2,9 @@ from tkinter import *
 import json
 from datetime import datetime
 from tkinter import messagebox
+from pathlib import Path
 
+FILE = Path(__file__).parent / 'history.json'
 
 class Calculation:
     def __init__(self, operand1, operation, operand2, result=None, time=None):
@@ -72,7 +74,7 @@ class History:
             self.history = []
     def load_history(self):
         try:
-            with open('history.json', 'r') as f:
+            with open(FILE, 'r') as f:
                 load_list = json.load(f)
             self.history = [Calculation.from_dict(calculation) for calculation in load_list]
         except FileNotFoundError:
@@ -81,7 +83,7 @@ class History:
             messagebox.showerror('Ошибка', 'Ошибка формата файла')
             self.history = []
     def save_history(self):
-        with open('history.json', 'w') as file:
+        with open(FILE, 'w') as file:
             json.dump([calculation.to_dict() for calculation in self.history], file)
     def __str__(self):
         return [calculation + "\n" for calculation in self.history]

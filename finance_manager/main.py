@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 class Transaction:
     def __init__(self, amount, category, type, date, description=''):
@@ -125,8 +126,8 @@ while True:
     elif command == '4':
         finance_manager.filter_by_category(input('Введите категорию: '))
     elif command == '5':
-        finance_manager.save_to_file(input('Введите файл: '))
+        finance_manager.save_to_file(Path(__file__).parent / input('Введите файл: '))
     elif command == '6':
-        finance_manager.load_from_file(input('Введите файл: '))
+        finance_manager.load_from_file(Path(__file__).parent / input('Введите файл: '))
 
 
