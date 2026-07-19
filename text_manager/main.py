@@ -3,33 +3,92 @@ import json
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 from typing import Literal
-from exclude import EXCLUDED_WORDS
-EXCLUDED_SYMBOLS = r" \n\r\t\v\f,.<>?/.,*!@\"#№;$%:^&()-=+|\\`~…–«»—"
+import requests
+from requests.exceptions import MissingSchema, Timeout, HTTPError, ConnectionError, TooManyRedirects
+from bs4 import BeautifulSoup
+from exclude import EXCLUDED_WORDS, EXCLUDED_SYMBOLS
 
 
 class TextManagerApp:
-    def __init__(self, history_file) -> None:
+    def __init__(self, mode: Literal['txt', 'request'], history_file: Path) -> None:
         self.HISTORY_FILE = history_file
         if not self.HISTORY_FILE.exists():
             with open(self.HISTORY_FILE, 'w', encoding='utf-8') as f:
                 json.dump([], f)
-        
-        self.file = askopenfilename(title = "Выберите текстовый файл", 
-                               filetypes=[("Текстовый файл", "*.txt"), ("Все файлы", "*.*")])
-        Tk().withdraw()
-        
-        if self.file:
-            print()
-            print(f'Вы открыли файл "{Path(self.file).name}"')
+            
+                
+        if mode=='txt':
+            
+            Tk().withdraw()
+            self.file = askopenfilename(title = "Выберите текстовый файл", 
+                                filetypes=[("Текстовый файл", "*.txt"), ("Все файлы", "*.*")])
+            
+            if self.file:
+                print()
+                print(f'Вы открыли файл "{Path(self.file).name}"')
+                with open(self.HISTORY_FILE, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
+                history.append(self.file)
+                with open(self.HISTORY_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(history, f)
+                self.encoding = None
+            elif self.file is None:
+                print('Файл не выбран')
+                return
+        elif mode=='request':
+            response = None
+            try:
+                url: str = input('Введите ссылку: ')
+                if not url.startswith(('http://', 'https://')):
+                    url = 'https://' + url
+                    print(f"Добавлен протокол https в вашу ссылку")
+                print()
+                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+                response = requests.get(url, timeout=10, headers=headers)
+                response.raise_for_status()
+            except MissingSchema:
+                print('Некорректный URL')
+                return
+            except Timeout:
+                print('Превышено время ожидания ответа')
+                return
+            except HTTPError:
+                if response is not None:
+                    if response.status_code==403:
+                        print('Доступ запрещён (Ошибка 403)')
+                    elif response.status_code==404:
+                        print('Страница не найдена (Ошиба 404)')
+                    else:
+                        print('Ошибка:', response.status_code)
+                return
+            except ConnectionError:
+                print('Ошибка соединения')
+                return
+            except TooManyRedirects:
+                print('Слишком много редиректов')
+                return
+            soup = BeautifulSoup(response.text, 'html.parser')
+            text = soup.get_text(separator=' ', strip=True)
+            if len(text.split()) < 10:
+                print('Страница не содержит достаточного текста')
+                return
             with open(self.HISTORY_FILE, 'r', encoding='utf-8') as f:
                 history = json.load(f)
-            history.append(self.file)
+            history.append(f'[ссылка] {url}')
             with open(self.HISTORY_FILE, 'w', encoding='utf-8') as f:
                 json.dump(history, f)
-        elif self.file is None:
-            print('Файл не выбран')
-            return
+                
+            self.file = Path(__file__).parent / 'downloaded.txt'
+            self.encoding = response.encoding or 'utf-8'
+            with open(self.file, 'w', encoding=self.encoding) as f:
+                f.write(text)
+                
+            
+            print('Вы открыли ссылку')
+            
+        self.setup()
         
+    def setup(self):
         while True:
             print("""\nДействия с файлом:
 1. Количество слов
@@ -65,7 +124,7 @@ class TextManagerApp:
     def words_number(self) -> int:
         if self.file is None:
             raise SystemError
-        with open(self.file, 'r') as text:
+        with open(self.file, 'r', encoding=self.encoding) as text:
             words = 0
             for line in text:
                 line = [word for word in line.strip().split() if word!=' ']
@@ -75,7 +134,7 @@ class TextManagerApp:
     def symbols_number(self) -> int:
         if self.file is None:
             raise SystemError
-        with open(self.file, 'r') as text:
+        with open(self.file, 'r', encoding=self.encoding) as text:
             symbols = 0
             for line in text:
                 line = line.strip()
@@ -96,7 +155,7 @@ class TextManagerApp:
         words_frequency_dict = {}
         places_number = self.get_places_number()
         
-        with open(self.file, 'r') as text:
+        with open(self.file, 'r', encoding=self.encoding) as text:
             # Считаем частоту повторения всех слов
             for line in text:
                 if mode==None:
@@ -106,7 +165,7 @@ class TextManagerApp:
                 for word in line:
                     if mode=='capitalized' and word != word.title():
                         continue
-                    word = word.strip(EXCLUDED_SYMBOLS).strip()
+                    word = word.strip().strip(EXCLUDED_SYMBOLS).strip()
                     if word.lower() not in EXCLUDED_WORDS and len(word) > 1 and not all([symbol in '1234567890' for symbol in word]):
                         if word in words_frequency_dict.keys():
                             words_frequency_dict[word] += 1
@@ -135,7 +194,7 @@ class TextManagerApp:
         split_character_by_case = input('Разделять символы по регистру?: ').lower() == 'да'
         print()
         symbols_frequency_dict = {}
-        with open(self.file, 'r') as text:
+        with open(self.file, 'r', encoding=self.encoding) as text:
             # Считаем частоту повторения всех символов
             for line in text:
                 line = line.strip()
@@ -171,15 +230,15 @@ class TextManagerApp:
             raise SystemError
         phrahes_frequency_dict = {}
         places_number = self.get_places_number()
-        with open(self.file, 'r') as text:
+        with open(self.file, 'r', encoding=self.encoding) as text:
             # Считаем частоту повторения всех словосочетаний
             for line in text:
                 line = line.strip().strip(EXCLUDED_SYMBOLS).strip().lower().split()
                 try:
                     for i in range(len(line)):
-                        if line[i].strip(EXCLUDED_SYMBOLS).strip() in EXCLUDED_WORDS or line[i+1].strip(EXCLUDED_SYMBOLS).strip() in EXCLUDED_WORDS:
+                        if line[i].strip().strip(EXCLUDED_SYMBOLS).strip() in EXCLUDED_WORDS or line[i+1].strip().strip(EXCLUDED_SYMBOLS).strip() in EXCLUDED_WORDS:
                             continue
-                        if line[i].rstrip(EXCLUDED_SYMBOLS)==line[i] and line[i+1].lstrip(EXCLUDED_SYMBOLS)==line[i+1]:
+                        if line[i].rstrip().rstrip(EXCLUDED_SYMBOLS).rstrip()==line[i] and line[i+1].lstrip().lstrip(EXCLUDED_SYMBOLS).lstrip()==line[i+1]:
                             phrahe = f'{line[i].strip().strip(EXCLUDED_SYMBOLS).strip()} {line[i+1].strip().strip(EXCLUDED_SYMBOLS).strip()}'
                             if phrahe in phrahes_frequency_dict.keys():
                                 phrahes_frequency_dict[phrahe] += 1
@@ -232,14 +291,17 @@ class MainMenu:
         while True:
             print("""\nГлавное меню:
 1. Открыть файл
-2. Посмотреть историю открытых файлов
+2. Загрузить текст по ссылке
+3. Посмотреть историю обращений
 0. Выход из программы\n
 """)        
             command = input('> ').strip()
             print()
             if command=='1':
-                TextManagerApp(self.HISTORY_FILE)
+                TextManagerApp('txt', self.HISTORY_FILE)
             elif command=='2':
+                TextManagerApp('request', self.HISTORY_FILE)
+            elif command=='3':
                 self.view_history()
             elif command=='0':
                 break 
@@ -249,7 +311,7 @@ class MainMenu:
     def view_history(self):
         with open(self.HISTORY_FILE, 'r', encoding='utf-8') as f:
             history_list = json.load(f)
-            if history_list == []:
+            if not history_list:
                 print('История пуста')
                 return
             memory = [None, 1]
