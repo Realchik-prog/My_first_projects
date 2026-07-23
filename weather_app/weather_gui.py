@@ -3,12 +3,14 @@ from tkinter import messagebox
 from weather_core import API_KEY, get_weather, show_history, clear_history, save_weather, \
 instruction, get_old_weather
 from pathlib import Path
+from threading import Thread
+import sqlite3
 
 class WeatherApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Погодный информер")
-        self.root.geometry("1200x500")
+        self.root.geometry("1300x500")
         self.root.resizable(True, False)
         self.root.iconbitmap(Path(__file__).parent / 'icon.ico')
         self.setup_ui()
@@ -56,8 +58,9 @@ class WeatherApp:
         self.clear_history_button.place(anchor='ne', relx=0.95, rely=0.86)
         
     def view_weather(self) -> None:
-        index = self.history_listbox.curselection()[0] + 1
-        self.info_label['text'] = get_old_weather(index)
+        if len(self.history_listbox.curselection()) != 0:
+            index = self.history_listbox.curselection()[0] + 1
+            self.info_label['text'] = get_old_weather(index)
 
     def on_get_weather(self):
         if API_KEY is None:
@@ -75,14 +78,31 @@ class WeatherApp:
         town = self.town_entry.get()
         if town.strip() == '':
             return
-        weather = get_weather(town)
+        self.town_entry['state'] = 'readonly'
+        self.get_weather_button['state'] = 'disabled'
+        self.input_town_label['text'] = 'Загрузка...'
+        get_weather_thread = Thread(target=self.fetch_weather_in_thread, args=(town,))
+        get_weather_thread.start()
+        
+    def fetch_weather_in_thread(self, town):
+        with sqlite3.connect(Path(__file__).parent / 'history.db') as connection:
+            weather = get_weather(town, thread_connect=connection)
+        self.root.after(0, self.update_ui, weather)
+        
+    def update_ui(self, weather):
         if not weather.startswith('\nСтрана:'):
             self.info_label['text'] = ''
+            self.town_entry['state'] = 'normal'
+            self.get_weather_button['state'] = 'normal'
+            self.input_town_label['text'] = 'Введите город'
             messagebox.showerror('Ошибка', weather)
             return
         self.town_entry.delete(0, tk.END)
         self.info_label['text'] = weather
         self.update_history()
+        self.town_entry['state'] = 'normal'
+        self.get_weather_button['state'] = 'normal'
+        self.input_town_label['text'] = 'Введите город'
 
 
     def on_clear_history(self):

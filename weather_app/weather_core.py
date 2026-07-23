@@ -12,6 +12,7 @@ except ImportError:
     
 HISTORY_FILE: Path = Path(__file__).parent / 'history.db'
 
+
 connection = sqlite3.connect(HISTORY_FILE)
 cursor = connection.cursor()
 cursor.execute("""
@@ -29,6 +30,7 @@ cursor.execute("""
 weather_logger = logging.getLogger('Логгер приложения погоды')
 weather_logger.setLevel(logging.INFO)
 
+
 file_handler = logging.FileHandler(Path(__file__).parent / "weather.log", 
                                    encoding="utf-8", mode="w")
 file_handler.setLevel(logging.DEBUG)
@@ -38,7 +40,11 @@ weather_logger.addHandler(file_handler)
 weather_logger.debug("Запуск программы")
 
 
-def get_weather(input_town: str) -> str:
+def get_weather(input_town: str, thread_connect=None) -> str:
+    if thread_connect is not None:
+        cursor = thread_connect.cursor()
+    else:
+        cursor = connection.cursor()
     input_town = input_town.strip().title()
     weather_logger.info(f'Пользователь ввёл город: {input_town}')
     url: str = "https://api.openweathermap.org/data/2.5/weather"
