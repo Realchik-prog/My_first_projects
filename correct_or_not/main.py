@@ -1,4 +1,4 @@
-from tkinter import Tk, Label, Button, W, Entry, LEFT
+from tkinter import Tk, Label, Button, W, Entry, LEFT, PhotoImage
 from random import randint, choice, random
 from time import time
 from tkinter.messagebox import askyesno, askyesnocancel, askokcancel
@@ -36,7 +36,13 @@ root = Tk()
 root.title('Верно или нет?')
 root.geometry('720x720')
 root.resizable(width=False, height=False)
-root.iconbitmap(resource_path('icon.ico'))
+try:
+    icon_path = resource_path('icon.png')
+    icon = PhotoImage(file=str(icon_path))
+    root.iconphoto(True, icon)
+    root.icon_image = icon
+except Exception as e:
+    print("Не удалось установить иконку:", e)
 
 
 # Темы

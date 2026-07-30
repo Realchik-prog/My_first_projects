@@ -97,7 +97,7 @@ def save_weather() -> None:
     connection.close()
     weather_logger.info('Данные сохранены')
     
-def show_history() -> Generator[str]:
+def show_history() -> Generator[str, None, None]:
     weather_logger.info('Пользователь запрашивает показ истории')
     cursor.execute("SELECT country, town, description, temp, pressure, humidity, time from weather_history")
     weathers: list[tuple] = cursor.fetchall()
@@ -132,7 +132,7 @@ def get_old_weather(index: int) -> str:
     weather_logger.error('Несуществующий индекс')
     raise IndexError
     
-def instruction() -> Generator[str]:
+def instruction() -> Generator[str, None, None]:
     weather_logger.error("Не найден API-ключ")
     yield "API-ключ не найден!"
     yield "\n" + "="*60

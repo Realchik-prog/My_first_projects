@@ -12,7 +12,13 @@ class WeatherApp:
         self.root.title("Погодный информер")
         self.root.geometry("1300x500")
         self.root.resizable(True, False)
-        self.root.iconbitmap(Path(__file__).parent / 'icon.ico')
+        try:
+            icon_path = Path(__file__).parent / 'icon.png'
+            icon = tk.PhotoImage(file = str(icon_path))
+            self.root.iconphoto(True, icon)
+            self.root.icon_image = icon
+        except Exception as e:
+            print("Не удалось установить иконку:", e)
         self.setup_ui()
         self.update_history()
 
