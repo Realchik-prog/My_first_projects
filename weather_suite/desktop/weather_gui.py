@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from weather_core import API_KEY, get_weather, show_history, clear_history, save_weather, \
+from core.weather_core import API_KEY, get_weather, show_history, clear_history, save_weather, \
 instruction, get_old_weather
 from pathlib import Path
 from threading import Thread

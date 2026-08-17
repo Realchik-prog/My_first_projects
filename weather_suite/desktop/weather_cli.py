@@ -1,4 +1,4 @@
-from weather_core import API_KEY, get_weather, \
+from core.weather_core import API_KEY, get_weather, \
 save_weather, show_history, instruction, clear_history
         
 
