@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from core.weather_core import API_KEY, get_weather, \
 save_weather, show_history, instruction, clear_history
         

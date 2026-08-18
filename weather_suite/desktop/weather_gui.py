@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import tkinter as tk
 from tkinter import messagebox
 from core.weather_core import API_KEY, get_weather, show_history, clear_history, save_weather, \
@@ -67,6 +72,8 @@ class WeatherApp:
         if len(self.history_listbox.curselection()) != 0:
             index = self.history_listbox.curselection()[0] + 1
             self.info_label['text'] = get_old_weather(index)
+        else:
+            self.info_label['text'] = 'Ничего не выбрано'
 
     def on_get_weather(self):
         if API_KEY is None:
@@ -91,7 +98,7 @@ class WeatherApp:
         get_weather_thread.start()
         
     def fetch_weather_in_thread(self, town):
-        with sqlite3.connect(Path(__file__).parent / 'history.db') as connection:
+        with sqlite3.connect(Path(__file__).parent.parent / 'core' / 'history.db') as connection:
             weather = get_weather(town, thread_connect=connection)
         self.root.after(0, self.update_ui, weather)
         
@@ -107,6 +114,7 @@ class WeatherApp:
         self.info_label['text'] = weather
         self.update_history()
         self.town_entry['state'] = 'normal'
+        self.town_entry.delete(0, tk.END)
         self.get_weather_button['state'] = 'normal'
         self.input_town_label['text'] = 'Введите город'
 
