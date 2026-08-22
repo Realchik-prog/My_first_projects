@@ -1,5 +1,13 @@
 # Мои первые проекты на Python
 
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Flask](https://img.shields.io/badge/Flask-2.3.0-green)
+![Tkinter](https://img.shields.io/badge/Tkinter-GUI-orange)
+![SQLite](https://img.shields.io/badge/SQLite-3-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+![GitHub last commit](https://img.shields.io/github/last-commit/Realchik-prog/My_first_projects)
+![GitHub repo size](https://img.shields.io/github/repo-size/Realchik-prog/My_first_projects)
+
 Этот репозиторий содержит мои учебные проекты, которые я сделал во время изучения Python.
 
 ## Как настроить окружение и запускать проекты
