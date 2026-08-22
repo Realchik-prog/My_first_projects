@@ -97,7 +97,9 @@ def save_weather() -> None:
     connection.close()
     weather_logger.info('Данные сохранены')
     
-def show_history() -> Generator[str, None, None]:
+def show_history(thread_connect=None) -> Generator[str, None, None]:
+    if thread_connect is not None:
+        cursor = thread_connect.cursor()
     weather_logger.info('Пользователь запрашивает показ истории')
     cursor.execute("SELECT country, town, description, temp, pressure, humidity, time from weather_history")
     weathers: list[tuple] = cursor.fetchall()
@@ -113,7 +115,9 @@ def show_history() -> Generator[str, None, None]:
             i += 1
             yield f'{i}) {weather_string}'
         weather_logger.info('Выведена история')
-def get_old_weather(index: int) -> str:
+def get_old_weather(index: int, thread_connect=None) -> str:
+    if thread_connect is not None:
+        cursor = thread_connect.cursor()
     weather_logger.info('Пользователь выбрал старый запрос погоды')
     cursor.execute("SELECT country, town, description, temp, pressure, humidity, time from weather_history")
     weathers: list[tuple] = cursor.fetchall()
@@ -139,12 +143,14 @@ def instruction() -> Generator[str, None, None]:
     yield "Для работы с погодой нужно получить бесплатный ключ OpenWeatherMap:"
     yield "1. Зайдите на сайт: https://openweathermap.org/"
     yield "2. Зарегистрируйтесь и получите API-ключ."
-    yield "3. Создайте в папке с программой файл config.py"
+    yield "3. Создайте в папке core файл config.py"
     yield "   и напишите в нём: API_KEY = 'ваш_ключ'"
     yield "="*60 + "\n"
     weather_logger.info('Инструкция по API-ключу выдана')
     
-def clear_history() -> str:
+def clear_history(thread_connect=None) -> str:
+    if thread_connect is not None:
+        cursor = thread_connect.cursor()
     weather_logger.debug('Удаление истории')
     cursor.execute("DELETE FROM weather_history")
     weather_logger.info('История удалена')

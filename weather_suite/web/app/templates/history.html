@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form action="", method="post" novalidate>
+{{ view.hidden_tag() }}
+<p>
+    {{ view.index.label }} <br>
+    {{ view.index(size=32) }} <br>
+    {% for error in view.index.errors %}
+    <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+    {% for error in errors %}
+    <span style="color: red;">{{ error }}</span>
+    {% endfor %}
+</p>
+<p>{{ view.submit() }}</p>
+</form>
+{% if response %}
+    {% for string in response %}
+    <p>{{ string }}</p>
+    {% endfor %}
+{% endif %}
+<hr>
+{% for string in history %}
+<p>{{ string }}</p>
+{% endfor %}
+<hr>
+<a href="{{ url_for('delete_history') }}">Удалить историю</a>
+{% endblock %}

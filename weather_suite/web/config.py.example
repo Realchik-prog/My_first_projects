@@ -1,0 +1,12 @@
+from pathlib import Path
+import os
+
+core_dir = Path(__file__).resolve().parent.parent / 'core'
+
+class Config:
+    # Секретный ключ — лучше задать через переменную окружения,
+    # или заменить 'your-secret-key-here' на свой ключ
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + str(core_dir / 'history.db')
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False

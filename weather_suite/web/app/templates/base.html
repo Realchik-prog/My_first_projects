@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if title %}
+    <title>{{ title }} - Погодный информер</title>
+    {% else %}
+    <title>Погодный информер</title>
+    {% endif %}
+</head>
+<body>
+    <div>
+        <h1>Погодный информер</h1>
+        <a href="{{ url_for('index') }}">Узнать погоду</a><br>
+        <a href="{{ url_for('history') }}">История</a>
+    </div>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Вы точно хотите очистить историю запросов?</h3>
+<form action="" method="post" novalidate>
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button type="submit" name="action" value="confirm">Да</button>
+<button type="submit" name="action" value="cancel">Нет</button>
+</form>
+{% endblock %}
