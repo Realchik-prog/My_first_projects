@@ -247,7 +247,10 @@ class CalculatorApp:
         self.demonstrative_entry['state'] = 'readonly'
     def input_operation(self, operation):
         self.demonstrative_entry['state'] = 'normal'
-        if self.queue==0 and len(self.demonstrative_entry.get())!=0:
+        if operation=='-' and len(self.demonstrative_entry.get())==0 and self.queue==0:
+            self.demonstrative_entry.insert(END, '-')
+            self.operand1.append('-')
+        elif self.queue==0 and len(self.demonstrative_entry.get())!=0 and self.demonstrative_entry.get()!='-':
             self.demonstrative_entry.insert(END, operation)
             self.queue = 1
             self.operation = operation
@@ -256,9 +259,7 @@ class CalculatorApp:
             self.demonstrative_entry.delete(len(string)-1, 'end')
             self.demonstrative_entry.insert(len(string)-1, operation)
             self.operation = operation
-        elif operation=='-' and len(self.demonstrative_entry.get())==0:
-            self.demonstrative_entry.insert(END, '-')
-            self.operand1.append('-')
+        
         self.demonstrative_entry['state'] = 'readonly'
     def keyboard_input(self, event):
         if event.keysym in "0123456789":
@@ -287,6 +288,9 @@ class CalculatorApp:
             if operand2 == 0 and self.operation=='/':
                 messagebox.showerror('Ошибка', 'Нельзя делить на ноль')
                 self.demonstrative_entry.delete(len(self.demonstrative_entry.get())-2, 'end')
+                self.operand2 = []
+                self.operation = None
+                self.queue = 0
                 return None
             calc = Calculation(operand1, self.operation, operand2)
             self.demonstrative_entry.delete(0, 'end')
@@ -319,6 +323,8 @@ class CalculatorApp:
                     self.operand1.pop()
             elif erase_symbol in "+-*/":
                 self.demonstrative_entry.delete(len(self.demonstrative_entry.get())-1, END)
+                if erase_symbol=='-' and self.queue==0:
+                    self.operand1.pop()
                 self.queue = 0
                 self.operation = None
         self.demonstrative_entry['state'] = 'readonly'
